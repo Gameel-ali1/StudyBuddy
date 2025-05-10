@@ -17,7 +17,7 @@ class Room(models.Model):
     #text fields for larger fields where no max_length required 
     description = models.TextField(null=True, #tells that its ok to store null if user didn't enter thing in this field
                                     blank=True) #tells the field can be empty in forms when user submitting
-    #participents = 
+    participants = models.ManyToManyField(User, related_name="participantes", blank=True) 
     updated = models.DateTimeField(auto_now=True) #get timestamp of last update to the row
     created = models.DateTimeField(auto_now_add=True) #get timestamp of row creation time
 
