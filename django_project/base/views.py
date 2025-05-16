@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.forms import UserCreationForm
 from .models import Room, Topic, Message
-from .forms import RoomForm
+from .forms import RoomForm, UserForm
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpRequest
 
@@ -66,7 +66,7 @@ def home(request):
     )
     rooms_count = rooms.count()
     topics = Topic.objects.all()
-    context = {'rooms': rooms, 'topics': topics, 'rooms_count': rooms_count, 'room_messages': room_messages}
+    context = {'rooms': rooms, 'topics': topics[:5], 'rooms_count': rooms_count, 'room_messages': room_messages}
     return render(request, 'base/home.html', context)
 
 def room(request: HttpRequest, pk):
@@ -149,3 +149,31 @@ def deleteMessage(request, pk):
         message.delete()
         return redirect('home')
     return render(request, 'base/delete.html', {'obj': message})
+
+
+@login_required(login_url='login')
+def updateUser(request):
+    user = request.user
+    form = UserForm(instance=user)
+
+    if request.method == 'POST':
+        form = UserForm(request.POST, instance=user) # to update old value not to create a new one
+        if form.is_valid:
+            form.save()
+            return redirect('user-profile', pk=user.id)
+    context = {'form':form}
+    return render(request, 'base/update-user.html', context)
+
+
+def topicsPage(request):
+    rooms_count = Room.objects.all().count
+    q = request.GET.get('q') if request.GET.get('q') is not None else ''
+    topics = Topic.objects.filter(name__icontains=q)
+    
+    context = {'topics': topics, 'rooms_count': rooms_count}
+    return render(request, 'base/topics.html', context)
+
+def activityPage(request):
+    activity_messages = Message.objects.all()
+    context = {'activity_messages':activity_messages}
+    return render(request, 'base/activity.html', context)
